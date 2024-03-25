@@ -5,5 +5,5 @@
 git clone https://github.com/timscreep/screenshotim.git
 cd screenshotim/
 chmod +x screenshotim
-cp screenshotim /usr/bin/
+sudo cp screenshotim /usr/bin/
 ```
