@@ -1,0 +1,79 @@
+#! /usr/bin/python3
+from datetime import datetime
+import subprocess
+import gi
+gi.require_version('Gtk', '3.0')
+from gi.repository import Gtk, Gdk
+
+sysget = subprocess.getoutput
+screenshotdir = "~/Pictures/Screenshots"
+now = datetime.now()
+file = f"{screenshotdir}/{now.strftime('%y%m%d-%H%M-%S')}.png"
+sysget(f"[ -d {screenshotdir} ] || mkdir -pv {screenshotdir}")
+save = False
+def take_screenshot(widget, mode):
+    global save
+    window = Gdk.get_default_root_window()
+    if sysget('echo $XDG_SESSION_TYPE') == 'wayland':
+        if save == True:
+            if mode == "Area":
+                sysget(f"pkill screenshotim && slurp | grim -g - - | wl-copy && wl-paste > {file}.png")
+            elif mode == "Delay":
+                sysget(f"pkill screenshotim && sleep 5 && grim - | wl-copy && wl-paste > {file}.png")
+            elif mode == "Full":
+                sysget(f"pkill screenshotim && sleep 0.5 && grim - | wl-copy && wl-paste > {file}.png")
+        if save == False:
+            if mode == "Area":
+                sysget("pkill screenshotim && slurp | grim -g - - | wl-copy")
+            elif mode == "Delay":
+                sysget("pkill screenshotim && sleep 5 && grim - | wl-copy")
+            elif mode == "Full":
+                sysget("pkill screenshotim && sleep 0.5 && grim - | wl-copy")
+     
+def on_switch_activated(switch, gparam):
+    global save
+    if switch.get_active():
+        print("Save enabled")
+        save = True
+    else:
+        print("Save disabled")
+        save = False
+
+
+
+
+window = Gtk.Window()
+window.connect("destroy", Gtk.main_quit)
+window.set_default_size(500, 10) 
+window.set_position(Gtk.WindowPosition.CENTER)
+
+
+button_area = Gtk.Button.new_with_label("Area")
+button_area.connect("clicked", take_screenshot, "Area")
+
+button_delay = Gtk.Button.new_with_label("Delay")
+button_delay.connect("clicked", take_screenshot, "Delay")
+
+button_full = Gtk.Button.new_with_label("Full")
+button_full.connect("clicked", take_screenshot, "Full")
+
+copy_save = Gtk.Switch()
+copy_save.connect("state-set", on_switch_activated)
+
+label = Gtk.Label()
+label.set_text("Save:")
+
+box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=0)
+box.pack_start(button_area, True, True, 10)
+box.pack_start(button_delay, True, True, 10)
+box.pack_start(button_full, True, True, 10)
+
+copy_save_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
+copy_save_box.pack_start(copy_save, False, False, 10)  # Отступы 10 пикселей
+box.pack_start(label, False, False, 10)  # Отступы вокруг текстового поля
+box.pack_start(copy_save_box, False, False, 0)
+
+
+window.add(box)
+window.show_all()
+Gtk.main()
